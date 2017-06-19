@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+ <html ng-app="app">
+   <head>
+     <title><%= title %></title>
+     <link rel='stylesheet' href='/stylesheets/style.css' />
+   </head>
+   <body>
+     <h1><%= title %></h1>
+ 
+     <ng-view></ng-view>
+ 
+     <!-- Libraries -->
+     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.25/angular.min.js"></script>
+     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.25/angular-route.min.js"></script>
+     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.25/angular-resource.min.js"></script>
+ 
+     <!-- Template -->
+     <script type="text/ng-template" id="/antenas.html">
+       Search: <input type="text" ng-model="search.name">
+       <ul>
+         <li ng-repeat="antena in antenas | filter: search">
+           <input type="checkbox" ng-model="antena.completed">
+            <a href="#/{{$index}}">{{antena.name}}</a>
+          </li>
+        </ul>
+       New task <input type="text" ng-model="newAntenas"><button ng-click="save()">Create</button>
+      </script>
+  
+      	<script type="text/ng-template" id="/antDetails.html">
+	      completed: <input type="checkbox" ng-model="antena.completed">
+	       note: <textarea>{{ antena.note }}</textarea>
+	    </script>
+	    <script>
+       angular.module('app', ['ngRoute', 'ngResource'])
+ 
+         //---------------
+         // Services
+         //---------------
+ 
+         .factory('Antenas', ['$resource', function($resource){
+           return $resource('/antenas/:id', null, {
+             'update': { method:'PUT' }
+           });
+         }])
+ 
+         //---------------
+         // Controllers
+         //---------------
+  
+          .controller('AntenasController', ['$scope', 'Antenas', function ($scope, Antenas) {
+            $scope.antenas = Antenas.query();
+ 
+           $scope.save = function(){
+             if(!$scope.newAntenas || $scope.newAntenas.length < 1) return;
+             var antena = new Antenas({ name: $scope.newAntenas, completed: false });
+ 
+             antena.$save(function(){
+               $scope.antenas.push(antena);
+               $scope.newAntenas = ''; // clear textbox
+             });
+           }
+          }])
+  
+          .controller('AntDetailCtrl', ['$scope', '$routeParams', 'Antenas', function ($scope, $routeParams, Antenas) {
+           $scope.antena = Antenas[$routeParams.id];
+         }])
+ 
+         //---------------
+         // Routes
+         //---------------
+ 
+         .config(['$routeProvider', function ($routeProvider) {
+           $routeProvider
+             .when('/', {
+               templateUrl: '/antenas.html',
+               controller: 'AntenasController'
+             })
+ 
+             .when('/:id', {
+               templateUrl: '/antDetails.html',
+               controller: 'AntDetailCtrl'
+            });
+         }]);
+     </script>
+   </body>
+ </html>
